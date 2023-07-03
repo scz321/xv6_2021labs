@@ -40,7 +40,8 @@ ls(char *path)
     close(fd);
     return;
   }
-
+//首先是打开一个文件，（目录首先也是一个文件，目录文件），对于普通文件，只需要输出该文件的元数据信息，对于目录文件，则不能只输出元数据信息，
+//而是要进行read，文件的内容加载到directory结构体中
   switch(st.type){
   case T_FILE:
     printf("%s %d %d %l\n", fmtname(path), st.type, st.ino, st.size);

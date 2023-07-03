@@ -2,6 +2,8 @@
 #define T_FILE    2   // File
 #define T_DEVICE  3   // Device
 
+
+//目前对于stat的理解是逻辑目录中的一个目录项
 struct stat {
   int dev;     // File system's disk device
   uint ino;    // Inode number

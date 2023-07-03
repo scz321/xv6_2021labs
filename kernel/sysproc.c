@@ -55,6 +55,7 @@ sys_sbrk(void)
 uint64
 sys_sleep(void)
 {
+  //这个n也是参数，也是可以被传入的，只是传入的方式比较巧妙，或者说系统调用函数的参数都使用类似方式传入
   int n;
   uint ticks0;
 
