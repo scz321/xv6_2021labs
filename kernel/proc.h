@@ -82,8 +82,14 @@ struct trapframe {
 
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
+//这里的proc结构体本质上就是我们在操作系统中常说的PCB
 // Per-process state
 struct proc {
+  //本分支新建的变量，用于维护当前被trace的进程
+  uint mask;
+
+
+  //呃呃，这合理吗，每一个进程都自带一个自旋锁？
   struct spinlock lock;
 
   // p->lock must be held when using these:
@@ -94,6 +100,7 @@ struct proc {
   int pid;                     // Process ID
 
   // wait_lock must be held when using this:
+  //子进程有指向父进程的指针，但是父进程没有指向子进程的。
   struct proc *parent;         // Parent process
 
   // these are private to the process, so p->lock need not be held.

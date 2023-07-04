@@ -6,6 +6,41 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "sysinfo.h"
+
+//本分支新增系统调用函数
+uint64
+sys_trace(void){
+  int n;
+  if(argint(0, &n) < 0){//只有一个参数，存储在a0寄存器中
+    printf("参数解析有误！\n");
+    return -1;//这里写的是-1，但是返回值是uint类型。所以应该返回一个很大的负数
+  }
+  //获取当前用户进程
+  myproc()->mask=n;
+  return 0; 
+
+}
+
+extern uint64 freemem(void);
+extern uint64 nproc(void);
+
+uint64 sys_sysinfo(void){
+  // 参数地址
+  uint64 addr;
+  if(argaddr(0, &addr) < 0)
+    return -1;
+  // 保存信息
+  struct sysinfo sys_info;
+  sys_info.freemem = freemem();
+  sys_info.nproc = nproc();
+  
+  if (copyout(myproc()->pagetable, addr, (char *)&sys_info, sizeof(sys_info)) < 0){
+    return -1;
+  }
+  return 0;
+}
+
 
 uint64
 sys_exit(void)

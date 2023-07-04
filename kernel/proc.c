@@ -315,6 +315,10 @@ fork(void)
   np->state = RUNNABLE;
   release(&np->lock);
 
+  acquire(&np->lock);
+  np->mask = p->mask;
+  release(&np->lock);
+
   return pid;
 }
 
@@ -653,4 +657,16 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+//syscall分支新增函数，用来统计并且返回当前处于非UNUSED状态的进程
+uint64
+nproc(void){
+  int cnt=0;
+  struct proc* p;
+  for(p=proc;p<proc+NPROC;p++){
+    if(p->state!=UNUSED)
+      cnt++;
+  }
+  return cnt;
 }

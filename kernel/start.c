@@ -51,6 +51,7 @@ start()
   w_tp(id);
 
   // switch to supervisor mode and jump to main().
+  //使用 asm volatile可以再c语言中嵌入式地使用汇编代码
   asm volatile("mret");
 }
 
