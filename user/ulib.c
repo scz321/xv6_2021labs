@@ -145,6 +145,7 @@ memcpy(void *dst, const void *src, uint n)
 int
 ugetpid(void)
 {
+  //这个函数的作用是，从一个固定的物理地址读取出usyscall的结构体
   struct usyscall *u = (struct usyscall *)USYSCALL;
   return u->pid;
 }

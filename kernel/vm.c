@@ -80,12 +80,14 @@ kvminithart()
 pte_t *
 walk(pagetable_t pagetable, uint64 va, int alloc)
 {
+  //页表的地址是物理地址，页表项的地址自然也是物理地址，
   if(va >= MAXVA)
     panic("walk");
 
   for(int level = 2; level > 0; level--) {
     pte_t *pte = &pagetable[PX(level, va)];
     if(*pte & PTE_V) {
+      //从下面这一句可以看出，这里的uint64的pagetable本质上是物理地址
       pagetable = (pagetable_t)PTE2PA(*pte);
     } else {
       if(!alloc || (pagetable = (pde_t*)kalloc()) == 0)
@@ -264,6 +266,7 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 // Recursively free page-table pages.
 // All leaf mappings must already have been removed.
 void
+
 freewalk(pagetable_t pagetable)
 {
   // there are 2^9 = 512 PTEs in a page table.
@@ -275,11 +278,84 @@ freewalk(pagetable_t pagetable)
       freewalk((pagetable_t)child);
       pagetable[i] = 0;
     } else if(pte & PTE_V){
+      
       panic("freewalk: leaf");
     }
   }
   kfree((void*)pagetable);
 }
+
+
+//task2开始
+
+// void
+
+// vmprint(pagetable_t pagetable,int depth)
+// {
+//   // there are 2^9 = 512 PTEs in a page table.
+//   //首先对根页表的512个页表项进行遍历
+//   for(int i = 0; i < 512; i++){
+//     pte_t pte = pagetable[i];
+
+//     //pte & PTE_V==1说明当前页表项有效pte & (PTE_R|PTE_W|PTE_X)) == 0说明当前页表项不是叶子结点，因为叶子节点至少有一个是1
+//     //这种情况下，首先需要打印当前页表项，同时进行递归
+
+//     if((pte & PTE_V) && (pte & (PTE_R|PTE_W|PTE_X)) == 0){
+//       for(int i=0;i<depth;i++)
+//         printf(".. ");
+//       printf("%d pte %p pa %p\n",i,pte,PTE2PA(pte));
+//       // this PTE points to a lower-level page table.
+//       uint64 child = PTE2PA(pte);
+//       depth++;
+//       vmprint((pagetable_t)child,depth);
+//       depth--;
+    
+//     } 
+//     //下面是叶子pte的case
+//     else if((pte & PTE_V) && (pte & (PTE_R|PTE_W|PTE_X)) != 0){
+//        for(int i=0;i<depth;i++)
+//         printf(".. ");
+//       printf("%d: pte %p pa %p\n",i,pte,PTE2PA(pte));
+//       return;
+//     }
+//     else if(pte & PTE_V){
+//       panic("vmprint: leaf");
+//     }
+//   }
+  
+// }
+
+void 
+printwalk(pagetable_t pagetable, uint level) {
+  char* prefix;
+  if (level == 2) prefix = "..";
+  else if (level == 1) prefix = ".. ..";
+  else prefix = ".. .. ..";
+  for(int i = 0; i < 512; i++){ // 每个页表有512项
+    pte_t pte = pagetable[i];
+    if(pte & PTE_V){ // 该页表项有效
+      uint64 pa = PTE2PA(pte); // 将虚拟地址转换为物理地址
+      printf("%s%d: pte %p pa %p\n", prefix, i, pte, pa);
+      if((pte & (PTE_R|PTE_W|PTE_X)) == 0){ // 有下一级页表
+         printwalk((pagetable_t)pa, level - 1);
+      }
+    }
+  }
+}
+ 
+void
+vmprint(pagetable_t pagetable) {
+  printf("page table %p\n", pagetable);
+  printwalk(pagetable, 2);
+}
+
+// part 1 end
+
+
+
+
+
+//-----------task2结束------------
 
 // Free user memory pages,
 // then free page-table pages.

@@ -10,6 +10,7 @@ void pgaccess_test();
 int
 main(int argc, char *argv[])
 {
+  printf("开始执行第一项测试\n");
   ugetpid_test();
   pgaccess_test();
   printf("pgtbltest: all tests succeeded\n");

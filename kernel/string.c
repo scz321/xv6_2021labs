@@ -32,7 +32,7 @@ memmove(void *dst, const void *src, uint n)
 {
   const char *s;
   char *d;
-
+  //printf("sizeof(char)==%d\n",sizeof(char));
   if(n == 0)
     return dst;
   

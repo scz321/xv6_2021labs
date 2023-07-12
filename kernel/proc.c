@@ -127,6 +127,15 @@ found:
     return 0;
   }
 
+//=============task 1第三处修改开始============
+  if((p->usyscall=(struct usyscall *)kalloc())==0){
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+  }
+  memmove(p->usyscall,&p->pid,8);
+//=============task 1第三处修改结束============
+
   // An empty user page table.
   p->pagetable = proc_pagetable(p);
   if(p->pagetable == 0){
@@ -163,6 +172,11 @@ freeproc(struct proc *p)
   p->chan = 0;
   p->killed = 0;
   p->xstate = 0;
+  //change
+  if(p->usyscall )
+     kfree( (void*)p->usyscall );
+   p->usyscall = 0;
+   //change
   p->state = UNUSED;
 }
 
@@ -177,6 +191,30 @@ proc_pagetable(struct proc *p)
   pagetable = uvmcreate();
   if(pagetable == 0)
     return 0;
+//=========================task1修改开始，第一处修改，共 处==================
+
+//创建一个物理地址pa到虚拟地址USYSCALL的映射，并更新page table
+//这里的主要问题在于，mappage函数所需要的一个pa参数，这个物理地址从何而来？
+//我一开始的一个自然的想法：(uint64)&(p->pid)。这是错误的，首先(uint64)&(p->pid)的结果并不是一个物理地址
+//其次，即使它是物理地址，用户进程也不见得能够访问这个物理地址。这时再去看题目的hint，发现还有一个函数allocproc，可以为进程分配物理地址
+  // if (mappages(pagetable, USYSCALL, PGSIZE, (uint64)(p->usyscall), PTE_R) < 0)
+  // {
+  //   uvmunmap(pagetable, USYSCALL, 1, 0);
+  //   uvmfree(pagetable, 0);
+  //   return 0;
+  // }
+  // map the USYSCALL just below TRAPFRAME.
+  if (mappages(pagetable, USYSCALL, PGSIZE,
+               (uint64)(p->usyscall), PTE_R | PTE_U) < 0)
+  {
+    uvmunmap(pagetable, TRAMPOLINE, 1, 0);
+    uvmunmap(pagetable, TRAPFRAME, 1, 0);
+    uvmfree(pagetable, 0);
+    return 0;
+  }
+
+  //=========================task1修改结束==================
+
 
   // map the trampoline code (for system call return)
   // at the highest user virtual address.
@@ -206,6 +244,7 @@ proc_freepagetable(pagetable_t pagetable, uint64 sz)
 {
   uvmunmap(pagetable, TRAMPOLINE, 1, 0);
   uvmunmap(pagetable, TRAPFRAME, 1, 0);
+  uvmunmap(pagetable, USYSCALL,1,0);
   uvmfree(pagetable, sz);
 }
 
